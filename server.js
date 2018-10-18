@@ -107,6 +107,8 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/upload", (req, res) => {
+  console.log("uploadImage", req.files.image.path);
+
   cloudinary.v2.uploader
     .upload(req.files.image.path, {
       eager: [{ width: 400, crop: "fit" }]
@@ -120,6 +122,7 @@ app.post("/upload", (req, res) => {
 });
 
 app.post("/post", (req, res) => {
+  console.log("post", req.body);
   db.Post.create(req.body)
     .then(function(dbPost) {
       db.User.findOneAndUpdate(
@@ -138,6 +141,7 @@ app.post("/post", (req, res) => {
 });
 
 app.get("/post", (req, res) => {
+  console.log("get posts", req.query);
   const { latitude, longitude, categories, offset } = req.query;
   let postArray = [];
   if (categories) {

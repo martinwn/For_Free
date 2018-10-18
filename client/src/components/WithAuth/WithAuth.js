@@ -45,6 +45,7 @@ export default function WithAuth(AuthComponent) {
             this.setState({
               user: profile
             });
+            console.log(profile);
           });
         } catch (error) {
           Auth.logout();
