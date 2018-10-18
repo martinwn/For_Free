@@ -154,8 +154,6 @@ app.get("/post", (req, res) => {
       })
       .catch(error => res.status(500).send(error));
   } else {
-    console.log(offset);
-
     db.Post.find()
       .sort({ createdAt: -1 })
       .skip(Number(offset))
@@ -175,14 +173,12 @@ app.get("/post", (req, res) => {
 });
 
 app.delete("/post", (req, res) => {
-  console.log(req.query.id);
   db.Post.deleteOne({ _id: req.query.id })
     .then(post => res.status(202).send(response))
     .catch(error => res.status(500).send(error));
 });
 
 app.delete("/notification", (req, res) => {
-  console.log(req.query.id);
   db.Notification.deleteOne({ _id: req.query.id })
     .then(response => res.status(202).send(response))
     .catch(error => console.log(error));
