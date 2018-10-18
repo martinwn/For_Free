@@ -2,7 +2,7 @@ import decode from "jwt-decode";
 export default class AuthService {
   // Initializing important variables
   constructor(domain) {
-    this.domain = domain || "http://localhost:3001"; // API server domain
+    this.domain = domain || "https://serene-retreat-92436.herokuapp.com"; // API server domain
   }
 
   login(email, password) {

@@ -21,7 +21,10 @@ if (process.env.NODE_ENV !== "production") {
 }
 // Cross-browser origin access
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "https://serene-retreat-92436.herokuapp.com"
+  );
   res.setHeader(
     "Access-Control-Allow-Headers",
     "X-Requested-With, Origin, Content-type, Authorization, Accept"
