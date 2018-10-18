@@ -1,27 +1,6 @@
 import React, { Component } from "react";
 import AuthService from "../AuthService/AuthService";
-const geolocator = require("geolocator");
-
-geolocator.config({
-  language: "en",
-  google: {
-    version: "3",
-    key: "AIzaSyCZMt2Xb6B8BVcvBw1kAKbM2b5w_M4rH6M"
-  }
-});
-
-const options = {
-  enableHighAccuracy: false,
-  timeout: 5000,
-  maximumWait: 10000, // max wait time for desired accuracy
-  maximumAge: 0, // disable cache
-  desiredAccuracy: 30, // meters
-  fallbackToIP: true, // fallback to IP if Geolocation fails or rejected
-  addressLookup: true,
-  timezone: false, // requires Google API key if true
-  map: false, // interactive map element id (or options object)
-  staticMap: false // requires Google API key if true
-};
+import API from "../../utils/API";
 
 export default function WithAuth(AuthComponent) {
   const Auth = new AuthService();
@@ -39,14 +18,24 @@ export default function WithAuth(AuthComponent) {
       } else {
         try {
           const profile = Auth.getProfile();
-          geolocator.locate(options, (error, location) => {
-            if (error) return console.log(error);
-            profile.location = location;
-            this.setState({
-              user: profile
-            });
-            console.log(profile);
-          });
+
+          API.getLocation()
+            .then(response => {
+              const location = {
+                address: {
+                  city: response.data.city,
+                  state: response.data.region_name,
+                  country: response.data.country_code
+                },
+                coords: {
+                  latitude: response.data.latitude,
+                  longitude: response.data.longitude
+                }
+              };
+              profile.location = location;
+              this.setState({ user: profile });
+            })
+            .catch(error => console.log(error));
         } catch (error) {
           Auth.logout();
           this.props.history.replace("/login");

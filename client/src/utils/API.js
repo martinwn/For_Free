@@ -3,28 +3,24 @@ const axios = require("axios");
 
 export default {
   registerUser: function(query) {
-    console.log(query);
-
     return axios.post("/register", query);
   },
 
   uploadImage: function(imageFile) {
-    console.log(imageFile);
-
     let form = new FormData();
     form.append("image", imageFile);
     return axios.post("/upload", form);
   },
 
-  createPost: function(query) {
-    console.log(query);
+  getLocation: function() {
+    return axios.get("/location");
+  },
 
+  createPost: function(query) {
     return axios.post("/post", query);
   },
 
   grabPosts: function(query) {
-    console.log(query);
-
     return axios.get("/post", {
       params: { latitude: query.latitude, longitude: query.longitude }
     });
@@ -36,25 +32,18 @@ export default {
   },
 
   getUserProfile: function(query) {
-    console.log(query);
     return axios.get("/profile", { params: { id: query } });
   },
 
   deletePost: function(query) {
-    console.log(query);
-
     return axios.delete("/post", { params: { id: query } });
   },
 
   deleteNotification: function(query) {
-    console.log(query);
-
     return axios.delete("/notification", { params: { id: query } });
   },
 
   getPostsByCategory: function(query) {
-    console.log(query);
-
     return axios.get("/post", {
       params: {
         latitude: query.latitude,

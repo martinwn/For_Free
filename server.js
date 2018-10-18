@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const exjwt = require("express-jwt");
 const db = require("./models");
+const axios = require("axios");
 const PORT = process.env.PORT || 3001;
 
 const app = express();
@@ -61,6 +62,79 @@ if (process.env.NODE_ENV === "production") {
   app.use(express.static("client/build"));
 }
 
+app.get("/location", (req, res) => {
+  axios
+    .get(`https://api.ipapi.com/api/check?access_key=${process.env.APIPI_KEY}`)
+    .then(response => {
+      axios
+        .get(
+          `https://api.ipapi.com/api/${response.data.ip}?access_key=${
+            process.env.APIPI_KEY
+          }`
+        )
+        .then(response => {
+          res.send(response.data);
+        })
+        .catch(error => res.status(500).send(error));
+    })
+    .catch(error => res.status(500).send(error));
+});
+
+app.get("/post", (req, res) => {
+  const { latitude, longitude, categories, offset } = req.query;
+  let postArray = [];
+  if (categories) {
+    db.Post.find({ category: { $in: [...categories] } })
+      .sort({ createdAt: -1 })
+      .skip(Number(offset))
+      .limit(5)
+      .then(post => {
+        post.forEach(function(element) {
+          if (element.checkInRadius(latitude, longitude)) {
+            postArray.push(element);
+          }
+        });
+      })
+      .then(function() {
+        res.json(postArray);
+      })
+      .catch(error => res.status(500).send(error));
+  } else {
+    db.Post.find()
+      .sort({ createdAt: -1 })
+      .skip(Number(offset))
+      .limit(5)
+      .then(post => {
+        post.forEach(function(element) {
+          if (element.checkInRadius(latitude, longitude)) {
+            postArray.push(element);
+          }
+        });
+      })
+      .then(function() {
+        res.json(postArray);
+      })
+      .catch(error => res.send(error));
+  }
+});
+
+app.get("/profile", (req, res) => {
+  db.User.findOne({ _id: req.query.id })
+    .populate({ path: "posts", options: { sort: { createdAt: "descending" } } })
+    .populate({
+      path: "notifications",
+      options: { sort: { createdAt: "descending" } }
+    })
+    .then(profile => {
+      const profileInfo = {
+        posts: profile.posts,
+        notifications: profile.notifications
+      };
+      res.json(profileInfo);
+    })
+    .catch(error => res.status(500).send(error));
+});
+
 app.post("/register", (req, res) => {
   db.User.create(req.body)
     .then(response => {
@@ -107,8 +181,6 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/upload", (req, res) => {
-  console.log("uploadImage", req.files.image.path);
-
   cloudinary.v2.uploader
     .upload(req.files.image.path, {
       eager: [{ width: 400, crop: "fit" }]
@@ -122,7 +194,6 @@ app.post("/upload", (req, res) => {
 });
 
 app.post("/post", (req, res) => {
-  console.log("post", req.body);
   db.Post.create(req.body)
     .then(function(dbPost) {
       db.User.findOneAndUpdate(
@@ -138,57 +209,6 @@ app.post("/post", (req, res) => {
         .catch(error => res.status(500).send(error));
     })
     .catch(error => res.status(500).send(error));
-});
-
-app.get("/post", (req, res) => {
-  console.log("get posts", req.query);
-  const { latitude, longitude, categories, offset } = req.query;
-  let postArray = [];
-  if (categories) {
-    db.Post.find({ category: { $in: [...categories] } })
-      .sort({ createdAt: -1 })
-      .skip(Number(offset))
-      .limit(5)
-      .then(post => {
-        post.forEach(function(element) {
-          if (element.checkInRadius(latitude, longitude)) {
-            postArray.push(element);
-          }
-        });
-      })
-      .then(function() {
-        res.json(postArray);
-      })
-      .catch(error => res.status(500).send(error));
-  } else {
-    db.Post.find()
-      .sort({ createdAt: -1 })
-      .skip(Number(offset))
-      .limit(5)
-      .then(post => {
-        post.forEach(function(element) {
-          if (element.checkInRadius(latitude, longitude)) {
-            postArray.push(element);
-          }
-        });
-      })
-      .then(function() {
-        res.json(postArray);
-      })
-      .catch(error => res.send(error));
-  }
-});
-
-app.delete("/post", (req, res) => {
-  db.Post.deleteOne({ _id: req.query.id })
-    .then(post => res.status(202).send(response))
-    .catch(error => res.status(500).send(error));
-});
-
-app.delete("/notification", (req, res) => {
-  db.Notification.deleteOne({ _id: req.query.id })
-    .then(response => res.status(202).send(response))
-    .catch(error => console.log(error));
 });
 
 app.post("/notification", (req, res) => {
@@ -207,21 +227,16 @@ app.post("/notification", (req, res) => {
     .catch(error => res.status(500).send(error));
 });
 
-app.get("/profile", (req, res) => {
-  db.User.findOne({ _id: req.query.id })
-    .populate({ path: "posts", options: { sort: { createdAt: "descending" } } })
-    .populate({
-      path: "notifications",
-      options: { sort: { createdAt: "descending" } }
-    })
-    .then(profile => {
-      const profileInfo = {
-        posts: profile.posts,
-        notifications: profile.notifications
-      };
-      res.json(profileInfo);
-    })
+app.delete("/post", (req, res) => {
+  db.Post.deleteOne({ _id: req.query.id })
+    .then(post => res.status(202).send(response))
     .catch(error => res.status(500).send(error));
+});
+
+app.delete("/notification", (req, res) => {
+  db.Notification.deleteOne({ _id: req.query.id })
+    .then(response => res.status(202).send(response))
+    .catch(error => console.log(error));
 });
 
 app.get("*", jwtMW, (req, res) => {
