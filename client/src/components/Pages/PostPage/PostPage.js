@@ -67,6 +67,7 @@ class PostPage extends Component {
   };
 
   handlePostSubmit = () => {
+    console.log("submitting post");
     this.handleImageUpload(this.state.uploadedImage, response => {
       const address = `${this.props.user.location.address.city}, ${this.props
         .user.location.address.state ||
